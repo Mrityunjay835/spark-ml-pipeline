@@ -1,7 +1,7 @@
 from src.utils.spark_session import create_spark_session
 from pyspark.sql.functions import (
     col, count, sum, avg, max, min,
-    datediff, lit, when
+    datediff, lit, when, stddev
 )
 
 
@@ -14,35 +14,25 @@ def main():
     df = spark.read.parquet("data/processed/final_dataset")
 
     # -------------------------------
-    # 2. Define Reference Date
+    # 2. Reference Date
     # -------------------------------
     reference_date = "2018-10-01"
 
     # -------------------------------
-    # 3. Create Recent Order Flag (IMPORTANT)
-    # -------------------------------
-    df = df.withColumn(
-        "is_recent_order",
-        when(
-            datediff(lit(reference_date), col("order_date")) <= 30,
-            1
-        ).otherwise(0)
-    )
-
-    # -------------------------------
-    # 4. Aggregate User-Level Features
+    # 3. Aggregate Features
     # -------------------------------
     features_df = df.groupBy("customer_id").agg(
         count("order_id").alias("total_orders"),
         sum("price").alias("total_spent"),
         avg("price").alias("avg_order_value"),
-        sum("is_recent_order").alias("recent_orders"),  # ✅ FIXED
+        max("price").alias("max_price"),               # 🔥 NEW
+        stddev("price").alias("price_variance"),       # 🔥 NEW
         max("order_date").alias("last_order_date"),
         min("order_date").alias("first_order_date")
     )
 
     # -------------------------------
-    # 5. Active Days Feature
+    # 4. Active Days
     # -------------------------------
     features_df = features_df.withColumn(
         "active_days",
@@ -50,7 +40,7 @@ def main():
     )
 
     # -------------------------------
-    # 6. Order Density Feature
+    # 5. Order Density
     # -------------------------------
     features_df = features_df.withColumn(
         "order_density",
@@ -58,7 +48,7 @@ def main():
     )
 
     # -------------------------------
-    # 7. Recency (for label creation only)
+    # 6. Recency (for label creation)
     # -------------------------------
     features_df = features_df.withColumn(
         "recency_days",
@@ -66,20 +56,21 @@ def main():
     )
 
     # -------------------------------
-    # 8. Handle Missing Values
+    # 7. Handle Null Values (CRITICAL)
     # -------------------------------
     features_df = features_df.fillna({
         "total_orders": 0,
         "total_spent": 0,
         "avg_order_value": 0,
-        "recent_orders": 0,
+        "max_price": 0,
+        "price_variance": 0,   # 🔥 important
         "active_days": 0,
         "order_density": 0,
         "recency_days": 999
     })
 
     # -------------------------------
-    # 9. Save Features
+    # 8. Save Features
     # -------------------------------
     features_df.write \
         .mode("overwrite") \

@@ -15,47 +15,46 @@ def main():
     df = spark.read.parquet("data/features/user_features")
 
     # -------------------------------
-    # 2. Create Balanced Label
+    # 2. Create Label (High Spender)
     # -------------------------------
-    quantile = df.approxQuantile("recency_days", [0.5], 0.0)[0]
+    quantile = df.approxQuantile("total_spent", [0.7], 0.0)[0]
 
     df = df.withColumn(
         "label",
-        when(col("recency_days") <= quantile, 1).otherwise(0)
+        when(col("total_spent") >= quantile, 1).otherwise(0)
+    )
+    df = df.withColumn(
+        "label",
+        (col("total_orders") > 1).cast("int")
     )
 
-    # -------------------------------
-    # 3. Check Label Distribution
-    # -------------------------------
     print("Label Distribution:")
     df.groupBy("label").count().show()
 
     # -------------------------------
-    # 4. Feature Selection (NO LEAKAGE)
+    # 3. Feature Selection (NO LEAKAGE)
     # -------------------------------
     feature_cols = [
-        "total_orders",
-        "total_spent",
         "avg_order_value",
-        "active_days",
-        "order_density",
-        "recent_orders"
+        "max_price",
+        "price_variance"
     ]
 
     assembler = VectorAssembler(
         inputCols=feature_cols,
-        outputCol="features"
+        outputCol="features",
+        handleInvalid="skip"   # 🔥 important
     )
 
     df = assembler.transform(df)
 
     # -------------------------------
-    # 5. Train/Test Split
+    # 4. Train/Test Split
     # -------------------------------
     train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
 
     # -------------------------------
-    # 6. Train Model
+    # 5. Train Model
     # -------------------------------
     lr = LogisticRegression(
         featuresCol="features",
@@ -65,14 +64,14 @@ def main():
     model = lr.fit(train_df)
 
     # -------------------------------
-    # 7. Predictions
+    # 6. Predictions
     # -------------------------------
     predictions = model.transform(test_df)
 
     predictions.select("label", "prediction", "probability").show(5, truncate=False)
 
     # -------------------------------
-    # 8. Evaluate Model
+    # 7. Evaluate Model
     # -------------------------------
     evaluator = BinaryClassificationEvaluator(
         labelCol="label",
@@ -82,14 +81,14 @@ def main():
 
     auc = evaluator.evaluate(predictions)
 
-    print(f"Model AUC: {auc}")
+    print(f"🔥 Model AUC: {auc}")
 
     # -------------------------------
-    # 9. Save Model
+    # 8. Save Model
     # -------------------------------
     model.write().overwrite().save("models/logistic_model")
 
-    print("✅ Model saved")
+    print("Model saved")
 
     spark.stop()
 
