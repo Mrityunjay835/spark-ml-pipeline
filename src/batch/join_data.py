@@ -1,6 +1,10 @@
 from src.utils.spark_session import create_spark_session
-from pyspark.sql.functions import col
 from src.config.constants import *
+from src.config.schema import customers_schema, items_schema, orders_schema
+
+
+from pyspark.sql.functions import col
+from pyspark.sql.functions import broadcast
 
 
 def main():
@@ -13,7 +17,7 @@ def main():
 
     orders_df = (
         spark.read
-        .schema("")
+        .schema(orders_schema)
         .option("header", True)
         .parquet("data/processed/orders_partitioned")
     )
@@ -24,6 +28,7 @@ def main():
 
     items_df = (
         spark.read
+        .schema(items_schema)
         .option("header", True)
         .csv("data/raw/olist/olist_order_items_dataset.csv")
     ).select(
@@ -39,6 +44,7 @@ def main():
 
     customers_df  = (
         spark.read
+        .schema(customers_schema)
         .option("header", True)
         .csv("data/raw/olist/olist_customers_dataset.csv")
     ).select(
@@ -50,7 +56,7 @@ def main():
     # 4. Join Orders + Customers
     # -------------------------------
     orders_customers_df = orders_df.join(
-        customers_df,
+        broadcast(customers_df),
         on = CUSTOMER_ID,
         how = "inner"
     )
@@ -60,7 +66,7 @@ def main():
     # -------------------------------
 
     final_df = orders_customers_df.join(
-        items_df,
+        broadcast(items_df),
         on = ORDER_ID,
         how = "inner"
     )
@@ -93,7 +99,12 @@ def main():
         .partitionBy(ORDER_DATE)
         .parquet("data/processed/final_dataset")
     )
-    
+
+
+    #-------------------------------
+    # 9. Explain the final dataset
+    #-------------------------------
+    final_df.explain(True)
     print(" Final dataset  saved")
     spark.stop()
 

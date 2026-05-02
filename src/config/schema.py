@@ -10,7 +10,7 @@ from pyspark.sql.types import (
 # -------------------------
 # Orders Schema
 # -------------------------
-c = StringType([
+orders_schema = StructType([
     StructField("order_id", StringType(), True),
     StructField("customer_id", StringType(), True),
     StructField("order_status", StringType(), True),
