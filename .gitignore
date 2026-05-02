@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Data (IMPORTANT - do not push raw data)
+data/raw/
+data/processed/
+
+# Logs
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+
+# Spark
+spark-warehouse/
+
