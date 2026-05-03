@@ -1,0 +1,75 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+26/05/03 14:31:35 WARN Utils: Your hostname, mrityunjay-System-Product-Name, resolves to a loopback address: 127.0.1.1; using 10.88.91.254 instead (on interface wlp5s0)
+26/05/03 14:31:35 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/05/03 14:31:35 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/mrityunjay/project/spark-ml-project/src/ml/train.py", line 94, in <module>
+    main()
+  File "/home/mrityunjay/project/spark-ml-project/src/ml/train.py", line 61, in main
+    model = lr.fit(train_df)
+            ^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/pyspark/ml/base.py", line 203, in fit
+    return self._fit(dataset)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/pyspark/ml/util.py", line 211, in wrapped
+    return f(self, dataset)
+           ^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/pyspark/ml/wrapper.py", line 417, in _fit
+    java_model = self._fit_java(dataset)
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/pyspark/ml/wrapper.py", line 413, in _fit_java
+    return self._java_obj.fit(dataset._jdf)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/py4j/java_gateway.py", line 1362, in __call__
+    return_value = get_return_value(
+                   ^^^^^^^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/pyspark/errors/exceptions/captured.py", line 263, in deco
+    return f(*a, **kw)
+           ^^^^^^^^^^^
+  File "/home/mrityunjay/project/spark-ml-project/.venv/lib/python3.11/site-packages/py4j/protocol.py", line 327, in get_return_value
+    raise Py4JJavaError(
+py4j.protocol.Py4JJavaError: An error occurred while calling o90.fit.
+: java.lang.NullPointerException: Cannot invoke "String.isEmpty()" because "$this" is null
+	at scala.collection.StringOps$.nonEmpty$extension(StringOps.scala:1170)
+	at org.apache.spark.ml.PredictorParams.validateAndTransformSchema(Predictor.scala:56)
+	at org.apache.spark.ml.PredictorParams.validateAndTransformSchema$(Predictor.scala:45)
+	at org.apache.spark.ml.classification.Classifier.org$apache$spark$ml$classification$ClassifierParams$$super$validateAndTransformSchema(Classifier.scala:54)
+	at org.apache.spark.ml.classification.ClassifierParams.validateAndTransformSchema(Classifier.scala:41)
+	at org.apache.spark.ml.classification.ClassifierParams.validateAndTransformSchema$(Classifier.scala:37)
+	at org.apache.spark.ml.classification.ProbabilisticClassifier.org$apache$spark$ml$classification$ProbabilisticClassifierParams$$super$validateAndTransformSchema(ProbabilisticClassifier.scala:52)
+	at org.apache.spark.ml.classification.ProbabilisticClassifierParams.validateAndTransformSchema(ProbabilisticClassifier.scala:39)
+	at org.apache.spark.ml.classification.ProbabilisticClassifierParams.validateAndTransformSchema$(ProbabilisticClassifier.scala:35)
+	at org.apache.spark.ml.classification.LogisticRegression.org$apache$spark$ml$classification$LogisticRegressionParams$$super$validateAndTransformSchema(LogisticRegression.scala:297)
+	at org.apache.spark.ml.classification.LogisticRegressionParams.validateAndTransformSchema(LogisticRegression.scala:280)
+	at org.apache.spark.ml.classification.LogisticRegressionParams.validateAndTransformSchema$(LogisticRegression.scala:267)
+	at org.apache.spark.ml.classification.LogisticRegression.validateAndTransformSchema(LogisticRegression.scala:297)
+	at org.apache.spark.ml.Predictor.transformSchema(Predictor.scala:141)
+	at org.apache.spark.ml.PipelineStage.transformSchema(Pipeline.scala:72)
+	at org.apache.spark.ml.Predictor.fit(Predictor.scala:97)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+	at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:374)
+	at py4j.Gateway.invoke(Gateway.java:282)
+	at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+	at py4j.commands.CallCommand.execute(CallCommand.java:79)
+	at py4j.ClientServerConnection.waitForCommands(ClientServerConnection.java:184)
+	at py4j.ClientServerConnection.run(ClientServerConnection.java:108)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+
+Label Distribution:
++-----+-----+
+|label|count|
++-----+-----+
+|    0|86843|
+|    1| 9635|
++-----+-----+
+
