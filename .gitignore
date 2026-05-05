@@ -8,6 +8,7 @@ __pycache__/
 # Data (IMPORTANT - do not push raw data)
 data/raw/
 data/processed/
+data/streaming/
 
 # Logs
 logs/
