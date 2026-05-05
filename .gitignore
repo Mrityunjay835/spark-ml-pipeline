@@ -1,24 +1,117 @@
-# Python
+# ─── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.whl
 
-# Virtual environment
+# ─── Virtual Environments ─────────────────────────────────────────────────────
+venv/
 .venv/
+env/
+.env/
+ENV/
 
-# Data (IMPORTANT - do not push raw data)
+# ─── Environment Variables ────────────────────────────────────────────────────
+.env
+.env.*
+*.env
+secrets.yaml
+secrets.json
+
+# ─── Spark ────────────────────────────────────────────────────────────────────
+metastore_db/
+derby.log
+spark-warehouse/
+.spark-staging/
+
+# ─── Data (large files — use DVC or cloud storage) ────────────────────────────
 data/raw/
 data/processed/
-data/streaming/
+data/features/
+data/streaming/input/
+data/streaming/checkpoint/
+data/streaming/predictions/
+*.parquet
+*.snappy.parquet
+*.csv
+*.tsv
+*.json.gz
 
-# Logs
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/features/.gitkeep
+!data/streaming/input/.gitkeep
+!data/streaming/checkpoint/.gitkeep
+
+# ─── Models ───────────────────────────────────────────────────────────────────
+models/model_gbt/
+models/model_rf/
+models/model_lr/
+models/spark_pipeline/
+*.pkl
+*.joblib
+*.h5
+*.pb
+
+# Keep metrics JSON (small, useful to track)
+!models/*.json
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
 logs/
+error.log
+*.log
 
-# Jupyter
+# Keep logs directory
+!logs/.gitkeep
+
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+notebooks/.ipynb_checkpoints/
 
-# OS files
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# Keep VS Code extensions recommendation
+!.vscode/extensions.json
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Spark
-spark-warehouse/
+# ─── Testing ──────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.tox/
 
+# ─── MLflow (if added later) ──────────────────────────────────────────────────
+mlruns/
+mlartifacts/
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+.dockerignore
+docker-compose.override.yml
