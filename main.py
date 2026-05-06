@@ -49,7 +49,7 @@ logger = logging.getLogger("pipeline")
 
 # ─── Stage registry ───────────────────────────────────────────────────────────
 # Defines valid stage names and their execution order
-STAGE_ORDER = ["ingest", "join", "transform", "features", "eda", "train", "stream"]
+STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "stream"]
 
 
 # ─── Stage runners ────────────────────────────────────────────────────────────
@@ -102,18 +102,28 @@ def run_eda(spark, **kwargs):
         class_balance, numeric_summary,
         churn_feature_stats, categorical_distribution,
     )
-    from src.config.constants import FEATURES_DIR, LABEL_COL
+    from src.batch.transform import compute_delivery_delay
+    from src.config.constants import PROCESSED_DIR, LABEL_COL
+    from pyspark.sql import functions as F
     import os
 
-    df = spark.read.parquet(os.path.join(FEATURES_DIR, "user_features"))
-    logger.info("[eda] Class balance:")
-    class_balance(df)
-    logger.info("[eda] Numeric summary:")
+    # Read transformed wide table (pre-feature-engineering)
+    df = spark.read.parquet(os.path.join(PROCESSED_DIR, "olist_transformed"))
+
+    logger.info("[eda] Numeric summary on transformed data:")
     numeric_summary(df)
-    logger.info("[eda] Churn feature stats:")
-    churn_feature_stats(df)
+
+    logger.info("[eda] Review score distribution:")
+    categorical_distribution(df, "review_score")
+
     logger.info("[eda] Customer state distribution:")
     categorical_distribution(df, "customer_state")
+
+    logger.info("[eda] Order status distribution:")
+    categorical_distribution(df, "order_status")
+
+    logger.info("[eda] Payment type distribution:")
+    categorical_distribution(df, "primary_payment_type")
 
 
 def run_train(spark, classifier: str = "gbt", use_cv: bool = False, **kwargs):
@@ -160,7 +170,7 @@ class PipelineOrchestrator:
         if self.stages_to_run == ["all"]:
             ordered = STAGE_ORDER[:]
         else:
-            # Validate names
+            # Validate names of stages to run
             for s in self.stages_to_run:
                 if s not in STAGES:
                     raise ValueError(

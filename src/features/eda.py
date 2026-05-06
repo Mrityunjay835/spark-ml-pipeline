@@ -176,29 +176,58 @@ def check_data_drift(
 
 # ─── Entrypoint ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import argparse
     logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--source", default="transformed",
+        choices=["transformed", "features"],
+        help="transformed = pre-feature-engineering | features = post-feature-engineering"
+    )
+    args = parser.parse_args()
+
     spark = get_spark_session()
 
-    features_path = os.path.join(FEATURES_DIR, "user_features")
-    df = spark.read.parquet(features_path)
+    if args.source == "transformed":
+        # Pre-feature-engineering EDA: understand raw distributions
+        path = os.path.join(PROCESSED_DIR, "olist_transformed")
+        df = spark.read.parquet(path)
 
-    print("\n=== Class Balance ===")
-    class_balance(df)
+        print("\n=== Numeric Summary (Transformed Data) ===")
+        numeric_summary(df)
 
-    print("\n=== Numeric Summary ===")
-    numeric_summary(df)
+        print("\n=== Review Score Distribution ===")
+        categorical_distribution(df, "review_score")
 
-    print("\n=== Churn Feature Stats ===")
-    churn_feature_stats(df)
+        print("\n=== Customer State Distribution ===")
+        categorical_distribution(df, "customer_state")
 
-    numeric_cols = [c for c, dtype in df.dtypes
-                    if dtype in ("double", "float", "int", "bigint", "long")
-                    and c != LABEL_COL]
+        print("\n=== Payment Type Distribution ===")
+        categorical_distribution(df, "primary_payment_type")
 
-    print("\n=== Correlation Matrix ===")
-    correlation_matrix(df, numeric_cols[:10])  # cap to 10 for readability
+    else:
+        # Post-feature-engineering EDA: understand feature store + label
+        path = os.path.join(FEATURES_DIR, "user_features")
+        df = spark.read.parquet(path)
 
-    print("\n=== Customer State Distribution ===")
-    categorical_distribution(df, "customer_state")
+        print("\n=== Class Balance ===")
+        class_balance(df)
+
+        print("\n=== Numeric Summary (Feature Store) ===")
+        numeric_summary(df)
+
+        print("\n=== Churn Feature Stats ===")
+        churn_feature_stats(df)
+
+        numeric_cols = [c for c, dtype in df.dtypes
+                        if dtype in ("double", "float", "int", "bigint", "long")
+                        and c != LABEL_COL]
+
+        print("\n=== Correlation Matrix ===")
+        correlation_matrix(df, numeric_cols[:10])
+
+        print("\n=== Customer State Distribution ===")
+        categorical_distribution(df, "customer_state")
 
     spark.stop()
