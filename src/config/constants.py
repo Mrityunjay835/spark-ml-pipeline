@@ -1,37 +1,3 @@
-# Orders
-ORDER_ID = "order_id"
-CUSTOMER_ID = "customer_id"
-ORDER_PURCHASE_TIMESTAMP = "order_purchase_timestamp"
-ORDER_DATE = "order_date"
-ORDER_STATUS = "order_status"
-TOTAL_ORDERS = "total_orders"
-AVG_ORDER_VALUE = "avg_order_value"
-MAX_PRICE = "max_price"
-PRICE_VARIANCE = "price_variance"
-FREIGHT_VALUE ="freight_value"
-SHIPPING_LIMIT_DATE ="shipping_limit_date"
-ORDER_DELIVERED_CARRIER_DATE = "order_delivered_carrier_date"
-ORDER_DELIVERED_CUSTOMER_DATE = "order_delivered_customer_date"
-ORDER_APPROVED_AT = "order_approved_at"
-ORDER_ESTIMATED_DELIVERY_DATE = "order_estimated_delivery_date"
-
-# Sheller
-SELLER_ID="seller_id"
-
-# Customers
-CUSTOMER_CITY = "customer_city"
-CUSTOMER_STATE = "customer_state"
-CUSTOMER_UNIQUE_ID= "customer_unique_id"
-CUSTOMER_ZIP_CODE_PREFIX= "customer_zip_code_prefix"
-
-# Items
-PRODUCT_ID = "product_id"
-PRICE = "price"
-ORDER_ITEM_ID="order_item_id"
-
-# other
-REFERENCE_DATE = "2018-10-01"
-
 """
 Project-wide constants. Single source of truth for all paths, model params, and config.
 """
@@ -93,7 +59,9 @@ SPARK_DRIVER_MEM    = "4g"
 SPARK_SHUFFLE_PARTS = 8                        # tune to 2x cores in prod
 
 # ─── Feature Engineering ───────────────────────────────────────────────────────
-CHURN_DAYS_THRESHOLD    = 90       # no purchase in N days → churned
+CHURN_DAYS_THRESHOLD    = 180      # Olist: ~2yr dataset, single-purchase customers
+                                   # 90 days → 81% churn (too aggressive)
+                                   # 180 days → ~40-50% churn (realistic)
 RECENCY_QUANTILES       = 5
 MAX_CATEGORIES          = 50       # StringIndexer cardinality cap
 

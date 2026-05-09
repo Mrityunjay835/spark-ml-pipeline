@@ -49,7 +49,7 @@ logger = logging.getLogger("pipeline")
 
 # ─── Stage registry ───────────────────────────────────────────────────────────
 # Defines valid stage names and their execution order
-STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "stream"]
+STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "monitor", "stream"]
 
 
 # ─── Stage runners ────────────────────────────────────────────────────────────
@@ -126,6 +126,13 @@ def run_eda(spark, **kwargs):
     categorical_distribution(df, "primary_payment_type")
 
 
+def run_monitor(spark, **kwargs):
+    from src.monitoring.monitor import run_health_check
+    from src.monitoring.retrain_trigger import run_drift_and_retrain_cycle, RetriggerConfig
+    run_health_check(spark)
+    run_drift_and_retrain_cycle(spark)
+
+
 def run_train(spark, classifier: str = "gbt", use_cv: bool = False, **kwargs):
     from src.ml.train import run_training
     model, metrics = run_training(spark, classifier_type=classifier, use_cv=use_cv)
@@ -149,8 +156,9 @@ STAGES = {
     "ingest":    run_ingest,
     "join":      run_join,
     "transform": run_transform,
-    "features":  run_features,
     "eda":       run_eda,
+    "features":  run_features,
+    "monitor":   run_monitor,
     "train":     run_train,
     "stream":    run_stream,
 }
@@ -170,7 +178,7 @@ class PipelineOrchestrator:
         if self.stages_to_run == ["all"]:
             ordered = STAGE_ORDER[:]
         else:
-            # Validate names of stages to run
+            # Validate names
             for s in self.stages_to_run:
                 if s not in STAGES:
                     raise ValueError(

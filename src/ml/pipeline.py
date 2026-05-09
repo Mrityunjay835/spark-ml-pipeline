@@ -38,24 +38,39 @@ logger = logging.getLogger(__name__)
 # ─── Feature column definitions ───────────────────────────────────────────────
 
 NUMERIC_FEATURES = [
-    "recency_days",
-    "frequency",
+    # ── DO NOT include recency_days — it directly defines the churn label ──
+    # churn_label = (recency_days > threshold) → using it is pure leakage
+
+    # Frequency signals
+    "frequency",              # num orders — legitimate predictor
+    "avg_items_per_order",
+    "total_items_purchased",
+
+    # Monetary signals
     "monetary",
     "avg_order_value",
+    "spend_trend",            # trajectory matters, not just total
+
+    # Satisfaction signals
     "avg_review_score",
-    "std_review_score",
-    "min_review_score",
+    "std_review_score",       # inconsistent reviews = at-risk customer
+    "min_review_score",       # worst experience they had
+
+    # Payment behavior
     "avg_installments",
-    "total_freight",
     "avg_freight_ratio",
+
+    # Engagement signals
     "weekend_purchase_ratio",
     "avg_purchase_hour",
     "avg_categories_per_order",
-    "avg_delivery_delay",
+
+    # Operational signals
+    "avg_delivery_delay",     # bad delivery experience → churn risk
     "max_delivery_delay",
-    "avg_items_per_order",
-    "total_items_purchased",
-    "spend_trend",
+    "total_freight",
+
+    # Derived
     "high_value_customer",
     "is_repeat_buyer",
 ]

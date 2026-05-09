@@ -1,0 +1,10 @@
+{
+  "auc_roc": 0.9998,
+  "auc_pr": 1.0,
+  "accuracy": 0.9966,
+  "f1": 0.9966,
+  "precision": 0.9966,
+  "recall": 0.9966,
+  "classifier": "gbt",
+  "timestamp": "20260509_003146"
+}
