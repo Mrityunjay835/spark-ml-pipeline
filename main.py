@@ -49,7 +49,7 @@ logger = logging.getLogger("pipeline")
 
 # ─── Stage registry ───────────────────────────────────────────────────────────
 # Defines valid stage names and their execution order
-STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "monitor", "stream"]
+STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "monitor", "debug", "stream"]
 
 
 # ─── Stage runners ────────────────────────────────────────────────────────────
@@ -126,6 +126,39 @@ def run_eda(spark, **kwargs):
     categorical_distribution(df, "primary_payment_type")
 
 
+def run_debug(spark, **kwargs):
+    from src.utils.debug_utils import (
+        print_ui_links, memory_advisor,
+        inspect_df, check_antipatterns,
+    )
+    from src.utils.spark_optimizer import (
+        run_optimization_report, detect_skew_multiple_cols,
+    )
+    from src.config.constants import FEATURES_DIR, PROCESSED_DIR
+    import os
+
+    print_ui_links(spark)
+    memory_advisor(spark)
+
+    features_path = os.path.join(FEATURES_DIR, "user_features")
+    if os.path.exists(features_path):
+        df = spark.read.parquet(features_path)
+        inspect_df(df, name="user_features", sample_n=3, show_plan=True)
+        check_antipatterns(df)
+        run_optimization_report(
+            spark, df,
+            table_name="user_features",
+            group_cols=["customer_state"],
+        )
+    wide_path = os.path.join(PROCESSED_DIR, "olist_wide")
+    if os.path.exists(wide_path):
+        wide = spark.read.parquet(wide_path)
+        skew = detect_skew_multiple_cols(wide, ["customer_state", "order_status"])
+        for r in skew:
+            if r["is_skewed"]:
+                logger.warning(f"[debug] Skew: {r['column']} ratio={r['skew_ratio']}x")
+
+
 def run_monitor(spark, **kwargs):
     from src.monitoring.monitor import run_health_check
     from src.monitoring.retrain_trigger import run_drift_and_retrain_cycle, RetriggerConfig
@@ -159,6 +192,7 @@ STAGES = {
     "eda":       run_eda,
     "features":  run_features,
     "monitor":   run_monitor,
+    "debug":     run_debug,
     "train":     run_train,
     "stream":    run_stream,
 }
