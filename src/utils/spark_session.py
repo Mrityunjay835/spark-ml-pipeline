@@ -64,8 +64,8 @@ def get_spark_session(
         ("spark.sql.autoBroadcastJoinThreshold",    "50MB"),
         # Kryo serialization
         ("spark.serializer",                        "org.apache.spark.serializer.KryoSerializer"),
-        # Arrow-based pandas conversion
-        ("spark.sql.execution.arrow.pyspark.enabled","true"),
+        # Arrow-based pandas conversion — disable if PyArrow not installed
+        ("spark.sql.execution.arrow.pyspark.enabled",         "false"),
         # S3 / GCS compatibility (no-op local)
         ("spark.hadoop.fs.s3a.impl",                "org.apache.hadoop.fs.s3a.S3AFileSystem"),
     ])
@@ -77,6 +77,19 @@ def get_spark_session(
 
     if enable_hive:
         builder = builder.enableHiveSupport()
+
+    # Delta Lake: configure_spark_with_delta_pip injects the correct JAR
+    # and sets the two required extensions automatically.
+    # This is the ONLY correct way to enable Delta locally with pip install.
+    try:
+        from delta import configure_spark_with_delta_pip
+        builder = configure_spark_with_delta_pip(builder)
+        logger.info("[spark] Delta Lake enabled via configure_spark_with_delta_pip")
+    except ImportError:
+        logger.warning(
+            "[spark] delta-spark not installed. Delta features unavailable. "
+            "Run: pip install delta-spark"
+        )
 
     spark = builder.getOrCreate()
     spark.sparkContext.setLogLevel("WARN")

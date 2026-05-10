@@ -223,6 +223,39 @@ def salt_and_join(
 # 3. BROADCAST ADVISOR
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _parse_spark_size_to_mb(value: str) -> float:
+    """
+    Parse Spark size strings to MB.
+    Handles: '50MB', '10485760' (bytes), '1g', '512k', '1tb'
+    """
+    value = str(value).strip().upper()
+    try:
+        # Pure number → bytes
+        return int(value) / (1024 * 1024)
+    except ValueError:
+        pass
+
+    units = {
+        "TB": 1024 * 1024,
+        "GB": 1024,
+        "MB": 1,
+        "KB": 1 / 1024,
+        "B":  1 / (1024 * 1024),
+        "G":  1024,
+        "M":  1,
+        "K":  1 / 1024,
+    }
+    for suffix, multiplier in units.items():
+        if value.endswith(suffix):
+            try:
+                return float(value[: -len(suffix)]) * multiplier
+            except ValueError:
+                break
+
+    logger.warning(f"[optimizer] Could not parse size '{value}', defaulting to 10MB")
+    return 10.0
+
+
 def broadcast_advisor(
     spark: SparkSession,
     df: DataFrame,
@@ -237,9 +270,8 @@ def broadcast_advisor(
     In prod: use df.rdd.toDebugString() or df.explain() to confirm
     Spark's physical plan chose BroadcastHashJoin.
     """
-    threshold_mb = int(
-        spark.conf.get("spark.sql.autoBroadcastJoinThreshold", "10485760")
-    ) / (1024 * 1024)
+    raw       = spark.conf.get("spark.sql.autoBroadcastJoinThreshold", "10485760")
+    threshold_mb = _parse_spark_size_to_mb(raw)
 
     if estimated_mb is None:
         # Estimate from row count × avg row size
@@ -305,7 +337,10 @@ def partition_advisor(
     Returns dict with recommendation and current settings.
     """
     current_partitions = df.rdd.getNumPartitions()
-    current_shuffle    = int(spark.conf.get("spark.sql.shuffle.partitions", "200"))
+    current_shuffle = int(
+        spark.conf.get("spark.sql.shuffle.partitions", "200").split(".")[0]
+        .replace("MB","").replace("GB","").replace("KB","").strip() or "200"
+    )
 
     # Estimate data size (rough: serialized row size × count)
     sample = df.limit(1000).toPandas()

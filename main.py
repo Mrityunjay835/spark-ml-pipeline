@@ -49,7 +49,7 @@ logger = logging.getLogger("pipeline")
 
 # ─── Stage registry ───────────────────────────────────────────────────────────
 # Defines valid stage names and their execution order
-STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "monitor", "debug", "stream"]
+STAGE_ORDER = ["ingest", "join", "transform", "eda", "features", "train", "monitor", "debug", "delta", "stream"]
 
 
 # ─── Stage runners ────────────────────────────────────────────────────────────
@@ -126,6 +126,25 @@ def run_eda(spark, **kwargs):
     categorical_distribution(df, "primary_payment_type")
 
 
+def run_delta(spark, **kwargs):
+    from src.delta.delta_writer import migrate_all
+    from src.delta.delta_ops import (
+        get_history, table_stats,
+        optimize_table, vacuum_table,
+    )
+    from src.config.constants import DELTA_USER_FEATURES, DELTA_TRANSFORMED
+
+    # Migrate all parquet tables to Delta
+    migrate_all(spark)
+
+    # Show history + stats on feature store
+    if os.path.exists(os.path.join(DELTA_USER_FEATURES, "_delta_log")):
+        get_history(DELTA_USER_FEATURES, limit=5)
+        table_stats(spark, DELTA_USER_FEATURES)
+        optimize_table(spark, DELTA_USER_FEATURES)
+        vacuum_table(DELTA_USER_FEATURES, retention_hours=168, dry_run=True)
+
+
 def run_debug(spark, **kwargs):
     from src.utils.debug_utils import (
         print_ui_links, memory_advisor,
@@ -194,6 +213,7 @@ STAGES = {
     "monitor":   run_monitor,
     "debug":     run_debug,
     "train":     run_train,
+    "delta":     run_delta,
     "stream":    run_stream,
 }
 
@@ -327,6 +347,12 @@ def parse_args():
         help="Streaming trigger interval. e.g. '10 seconds'",
     )
     parser.add_argument(
+        "--pause-ui",
+        action="store_true",
+        help="Keep SparkSession alive after pipeline finishes so Spark UI stays open. "
+             "Press Enter to exit.",
+    )
+    parser.add_argument(
         "--list-stages",
         action="store_true",
         help="Print stage order and exit.",
@@ -364,6 +390,19 @@ def main():
     )
 
     success = orchestrator.run(spark)
+
+    if args.pause_ui:
+        ui_url = spark.sparkContext.uiWebUrl or "http://localhost:4040"
+        print(f"\n{'='*55}")
+        print(f"✅ Pipeline done. Spark UI is still running.")
+        print(f"👉 Open in browser: {ui_url}")
+        print(f"   Jobs    : {ui_url}/jobs/")
+        print(f"   Stages  : {ui_url}/stages/")
+        print(f"   SQL/DAG : {ui_url}/SQL/")
+        print(f"   Storage : {ui_url}/storage/")
+        print(f"{'='*55}")
+        input("\nPress Enter to shut down Spark and exit...\n")
+
     stop_spark_session()
     sys.exit(0 if success else 1)
 

@@ -22,6 +22,15 @@ MODELS_DIR      = os.path.join(BASE_DIR, "models")
 PIPELINE_PATH   = os.path.join(MODELS_DIR, "spark_pipeline")
 MODEL_PATH      = os.path.join(MODELS_DIR, "churn_model")
 
+# ─── Delta Lake Paths ─────────────────────────────────────────────────────────
+DELTA_DIR               = os.path.join(DATA_DIR, "delta")
+DELTA_ORDERS            = os.path.join(DELTA_DIR, "orders")
+DELTA_CUSTOMERS         = os.path.join(DELTA_DIR, "customers")
+DELTA_WIDE              = os.path.join(DELTA_DIR, "olist_wide")
+DELTA_TRANSFORMED       = os.path.join(DELTA_DIR, "olist_transformed")
+DELTA_USER_FEATURES     = os.path.join(DELTA_DIR, "user_features")
+DELTA_PREDICTIONS       = os.path.join(DELTA_DIR, "predictions")
+
 # Streaming
 STREAMING_INPUT_DIR  = os.path.join(DATA_DIR, "streaming", "input")
 STREAMING_CHECKPOINT = os.path.join(DATA_DIR, "streaming", "checkpoint")
